@@ -40,6 +40,27 @@ const Create = () => {
     "5": { name: "Real Estate Pro", gradient: "from-amber-600 to-orange-600" }
   };
 
+  // Load Google Fonts dynamically
+  useEffect(() => {
+    const loadFont = (fontFamily: string) => {
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;500;600;700&display=swap`;
+      link.rel = 'stylesheet';
+      
+      // Remove existing font link if any
+      const existingLink = document.querySelector(`link[href*="${fontFamily.replace(' ', '+')}"]`);
+      if (existingLink) {
+        existingLink.remove();
+      }
+      
+      document.head.appendChild(link);
+    };
+
+    if (designSettings.fontFamily) {
+      loadFont(designSettings.fontFamily);
+    }
+  }, [designSettings.fontFamily]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -49,6 +70,20 @@ const Create = () => {
   };
 
   const currentTemplate = templates[designSettings.template as keyof typeof templates] || templates["1"];
+
+  // Create custom gradient or use template gradient
+  const getCardBackground = () => {
+    if (designSettings.primaryColor !== "#6366f1") {
+      // If user changed primary color, create a custom gradient
+      const primaryColor = designSettings.primaryColor;
+      const lighterShade = primaryColor + "CC"; // Add some transparency for gradient effect
+      return {
+        background: `linear-gradient(135deg, ${primaryColor} 0%, ${lighterShade} 100%)`
+      };
+    }
+    // Use template gradient
+    return {};
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
@@ -237,8 +272,11 @@ const Create = () => {
                 {/* Business Card Preview */}
                 <div className="bg-gray-100 p-8 rounded-xl flex items-center justify-center">
                   <div 
-                    className={`w-80 h-48 bg-gradient-to-br ${currentTemplate.gradient} rounded-lg shadow-2xl p-6 text-white relative overflow-hidden`}
-                    style={{ fontFamily: designSettings.fontFamily }}
+                    className={`w-80 h-48 ${designSettings.primaryColor === "#6366f1" ? `bg-gradient-to-br ${currentTemplate.gradient}` : ''} rounded-lg shadow-2xl p-6 text-white relative overflow-hidden`}
+                    style={{ 
+                      fontFamily: designSettings.fontFamily,
+                      ...getCardBackground()
+                    }}
                   >
                     {/* Decorative elements */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
