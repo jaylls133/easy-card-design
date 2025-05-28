@@ -4,28 +4,101 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "react-router-dom";
-import { Download, FileText, ArrowLeft } from "lucide-react";
+import { Download, FileText, ArrowLeft, Image, FileDown } from "lucide-react";
+import { generatePDF, generatePNG, generateMultiCardPDF } from "@/utils/downloadUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const DownloadPage = () => {
   const location = useLocation();
   const { formData, designSettings } = location.state || {};
+  const { toast } = useToast();
   
   const [paperSize, setPaperSize] = useState("a4");
   const [includeBleed, setIncludeBleed] = useState("no");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const templates = {
     "1": { name: "Modern Tech", gradient: "from-blue-600 to-purple-600" },
     "2": { name: "Classic Business", gradient: "from-gray-800 to-gray-600" },
     "3": { name: "Creative Designer", gradient: "from-pink-500 to-orange-500" },
     "4": { name: "Medical Professional", gradient: "from-green-600 to-teal-600" },
-    "5": { name: "Real Estate Pro", gradient: "from-amber-600 to-orange-600" }
+    "5": { name: "Real Estate Pro", gradient: "from-amber-600 to-orange-600" },
+    "6": { name: "Tech Startup", gradient: "from-purple-600 to-pink-600" },
+    "7": { name: "Digital Innovation", gradient: "from-cyan-500 to-blue-500" },
+    "8": { name: "Software Developer", gradient: "from-gray-800 to-gray-600" },
+    "9": { name: "AI Expert", gradient: "from-indigo-600 to-purple-600" },
+    "10": { name: "Tech Executive", gradient: "from-slate-700 to-slate-900" }
   };
 
   const currentTemplate = templates[designSettings?.template as keyof typeof templates] || templates["1"];
 
-  const handleDownload = () => {
-    // In a real app, this would generate and download a PDF
-    alert("PDF download would start here! In a real implementation, this would generate a high-resolution PDF file.");
+  const handleDownloadPDF = async () => {
+    setIsDownloading(true);
+    try {
+      await generatePDF(formData, designSettings);
+      toast({
+        title: "PDF Downloaded!",
+        description: "Your business card PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadPNG = async () => {
+    setIsDownloading(true);
+    try {
+      await generatePNG(formData, designSettings);
+      toast({
+        title: "PNG Downloaded!",
+        description: "Your business card PNG has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your PNG. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadMultiPDF = async () => {
+    setIsDownloading(true);
+    try {
+      await generateMultiCardPDF(formData, designSettings);
+      toast({
+        title: "Multi-Card PDF Downloaded!",
+        description: "Your business card sheet PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your multi-card PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Create custom gradient or use template gradient
+  const getCardBackground = () => {
+    if (designSettings?.primaryColor !== "#6366f1") {
+      const primaryColor = designSettings.primaryColor;
+      const lighterShade = primaryColor + "CC";
+      return {
+        background: `linear-gradient(135deg, ${primaryColor} 0%, ${lighterShade} 100%)`
+      };
+    }
+    return {};
   };
 
   if (!formData || !designSettings) {
@@ -74,7 +147,7 @@ const DownloadPage = () => {
             Download Your Business Card
           </h1>
           <p className="text-xl text-gray-600">
-            Your design is ready! Choose your download options below.
+            Your design is ready! Choose your download format below.
           </p>
         </div>
 
@@ -98,8 +171,12 @@ const DownloadPage = () => {
                   
                   <div className="flex justify-center">
                     <div 
-                      className={`w-80 h-48 bg-gradient-to-br ${currentTemplate.gradient} rounded-lg shadow-xl p-6 text-white relative overflow-hidden transform scale-110`}
-                      style={{ fontFamily: designSettings.fontFamily }}
+                      id="business-card-preview"
+                      className={`w-80 h-48 ${designSettings.primaryColor === "#6366f1" ? `bg-gradient-to-br ${currentTemplate.gradient}` : ''} rounded-lg shadow-xl p-6 text-white relative overflow-hidden transform scale-110`}
+                      style={{ 
+                        fontFamily: designSettings.fontFamily,
+                        ...getCardBackground()
+                      }}
                     >
                       {/* Decorative elements */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -196,12 +273,12 @@ const DownloadPage = () => {
                   </div>
 
                   <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
-                    <h3 className="font-semibold text-blue-900 mb-2">What You'll Get:</h3>
+                    <h3 className="font-semibold text-blue-900 mb-2">Available Formats:</h3>
                     <ul className="text-sm text-blue-800 space-y-1">
                       <li>• High-resolution PDF (300 DPI)</li>
-                      <li>• Print-ready format</li>
-                      <li>• Professional quality output</li>
-                      <li>• Multiple cards per page for easy printing</li>
+                      <li>• PNG image (High quality)</li>
+                      <li>• Multi-card PDF sheet</li>
+                      <li>• Print-ready formats</li>
                     </ul>
                   </div>
                 </div>
@@ -213,14 +290,35 @@ const DownloadPage = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <Button 
-                    onClick={handleDownload}
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloading}
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-4 text-lg font-semibold"
                   >
-                    <Download className="mr-2 w-5 h-5" />
-                    Download PDF
+                    <FileDown className="mr-2 w-5 h-5" />
+                    {isDownloading ? 'Generating...' : 'Download PDF'}
+                  </Button>
+
+                  <Button 
+                    onClick={handleDownloadPNG}
+                    disabled={isDownloading}
+                    variant="outline"
+                    className="w-full py-4 text-lg font-semibold border-2 border-purple-200 hover:bg-purple-50"
+                  >
+                    <Image className="mr-2 w-5 h-5" />
+                    {isDownloading ? 'Generating...' : 'Download PNG'}
+                  </Button>
+
+                  <Button 
+                    onClick={handleDownloadMultiPDF}
+                    disabled={isDownloading}
+                    variant="outline"
+                    className="w-full py-4 text-lg font-semibold border-2 border-blue-200 hover:bg-blue-50"
+                  >
+                    <FileText className="mr-2 w-5 h-5" />
+                    {isDownloading ? 'Generating...' : 'Download Sheet (Multiple Cards)'}
                   </Button>
                   
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="grid sm:grid-cols-2 gap-3 mt-6">
                     <Link to="/create" state={{ formData, designSettings }}>
                       <Button variant="outline" className="w-full">
                         <ArrowLeft className="mr-2 w-4 h-4" />
@@ -238,7 +336,7 @@ const DownloadPage = () => {
                 <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
                   <h3 className="font-semibold text-green-900 mb-2">✅ Ready to Print!</h3>
                   <p className="text-sm text-green-800">
-                    Your business card is optimized for professional printing. Take the PDF to any print shop or use your home printer.
+                    Your business card is optimized for professional printing. Choose your preferred format above.
                   </p>
                 </div>
               </CardContent>

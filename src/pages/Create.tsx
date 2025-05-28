@@ -11,7 +11,7 @@ import { Download, Palette } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const Create = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const templateId = searchParams.get('template');
   
   const [formData, setFormData] = useState({
@@ -32,12 +32,24 @@ const Create = () => {
     textColor: "#1f2937"
   });
 
+  // Update template when URL parameter changes
+  useEffect(() => {
+    if (templateId && templateId !== designSettings.template) {
+      setDesignSettings(prev => ({ ...prev, template: templateId }));
+    }
+  }, [templateId]);
+
   const templates = {
     "1": { name: "Modern Tech", gradient: "from-blue-600 to-purple-600" },
     "2": { name: "Classic Business", gradient: "from-gray-800 to-gray-600" },
     "3": { name: "Creative Designer", gradient: "from-pink-500 to-orange-500" },
     "4": { name: "Medical Professional", gradient: "from-green-600 to-teal-600" },
-    "5": { name: "Real Estate Pro", gradient: "from-amber-600 to-orange-600" }
+    "5": { name: "Real Estate Pro", gradient: "from-amber-600 to-orange-600" },
+    "6": { name: "Tech Startup", gradient: "from-purple-600 to-pink-600" },
+    "7": { name: "Digital Innovation", gradient: "from-cyan-500 to-blue-500" },
+    "8": { name: "Software Developer", gradient: "from-gray-800 to-gray-600" },
+    "9": { name: "AI Expert", gradient: "from-indigo-600 to-purple-600" },
+    "10": { name: "Tech Executive", gradient: "from-slate-700 to-slate-900" }
   };
 
   // Load Google Fonts dynamically
@@ -67,6 +79,11 @@ const Create = () => {
 
   const handleDesignChange = (field: string, value: string) => {
     setDesignSettings(prev => ({ ...prev, [field]: value }));
+    
+    // Update URL when template changes
+    if (field === 'template') {
+      setSearchParams({ template: value });
+    }
   };
 
   const currentTemplate = templates[designSettings.template as keyof typeof templates] || templates["1"];
@@ -233,6 +250,8 @@ const Create = () => {
                           <SelectItem value="Roboto">Roboto</SelectItem>
                           <SelectItem value="Poppins">Poppins</SelectItem>
                           <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                          <SelectItem value="Lato">Lato</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -272,6 +291,7 @@ const Create = () => {
                 {/* Business Card Preview */}
                 <div className="bg-gray-100 p-8 rounded-xl flex items-center justify-center">
                   <div 
+                    id="business-card-preview"
                     className={`w-80 h-48 ${designSettings.primaryColor === "#6366f1" ? `bg-gradient-to-br ${currentTemplate.gradient}` : ''} rounded-lg shadow-2xl p-6 text-white relative overflow-hidden`}
                     style={{ 
                       fontFamily: designSettings.fontFamily,
@@ -303,7 +323,7 @@ const Create = () => {
                   <Link to="/download" state={{ formData, designSettings }}>
                     <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 text-lg font-semibold">
                       <Download className="mr-2 w-5 h-5" />
-                      Generate PDF
+                      Generate PDF & PNG
                     </Button>
                   </Link>
                   <Link to="/templates">
